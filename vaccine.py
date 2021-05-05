@@ -23,9 +23,9 @@ for center in data['centers']:
 #            print "**********************"
 
 # this is the Twilio sandbox testing number
-from_whatsapp_number='whatsapp:+14155238886'
+from_whatsapp_number='whatsapp:+xxxxxxxxxxx'
 # replace this number with your own WhatsApp Messaging number
-to_whatsapp_number='whatsapp:+919844802808'
+to_whatsapp_number='whatsapp:+xxxxxxxxxxx'
 
 msg="""
 Hospital Name: %s
