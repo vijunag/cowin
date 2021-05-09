@@ -16,16 +16,12 @@ headers = {
     'Connection': 'keep-alive',
 }
 
-params = (
-    ('district_id', '294'),
-    ('date', '07-05-2021'),
-)
-
 #NB. Original query string below. It seems impossible to parse and
 #reproduce query strings 100% accurately so the one below is given
 #in case the reproduced version is not "correct".
 # response = requests.get('https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByDistrict?district_id=294&date=07-05-2021', headers=headers)
 
+sessions=dict()
 def PushTelegramNotification(msg):
     files = {
        'chat_id': (None, '-1001458001301'),
@@ -54,9 +50,12 @@ def CheckSlots(day):
     total_avail=0
     hosp_list=[]
     for center in data['centers']:
-#        if center['fee_type'] == 'Free':
-#            continue
+        if center['fee_type'] == 'Free':
+            continue
         hosp = center['name']
+        if hosp not in sessions.keys():
+          print ("%s not found in sessions"%hosp)
+          sessions[hosp] = dict()
         for slot in center['sessions']:
             if slot["available_capacity"]>0 and slot['min_age_limit']<45:
                 slot['name']=hosp
@@ -65,6 +64,7 @@ def CheckSlots(day):
                 total_avail = total_avail + slot['available_capacity']
                 print("**********************")
                 print("Hospital Name: ", hosp)
+                print("Session ID: ", slot['session_id'])
                 print("Fee Type: ", center['fee_type'])
                 print("Pincode: ", slot["pin"])
                 print("Min Age: ", slot['min_age_limit'])
@@ -73,12 +73,15 @@ def CheckSlots(day):
                 print("Vaccine: ", slot["vaccine"])
                 print("**********************")
     if total_avail > 0:
-#        client.messages.create(body='%d available: Hurry up'%total_avail,
-#                               from_=from_whatsapp_number,
-#                               to=to_whatsapp_number)
         for hosp in hosp_list:
-            print(msg%(hosp['name'],hosp['pin'],hosp['date'],hosp['min_age_limit'],hosp['available_capacity'],hosp['date'],hosp['vaccine']))
-            PushTelegramNotification(msg%(hosp['name'],hosp['pin'],hosp['date'],hosp['min_age_limit'],hosp['available_capacity'],hosp['date'],hosp['vaccine']))
+            print ("Checking if hop with session exists...%s"%hosp['name'])
+            if hosp['session_id'] not in sessions[hosp['name']].keys():
+                print ("Sending notification for %s:%s"%(hosp['name'],hosp['session_id']))
+                sessions[hosp['name']][hosp['session_id']] = True
+                print(msg%(hosp['name'],hosp['pin'],hosp['date'],hosp['min_age_limit'],hosp['available_capacity'],hosp['date'],hosp['vaccine']))
+                PushTelegramNotification(msg%(hosp['name'],hosp['pin'],hosp['date'],hosp['min_age_limit'],hosp['available_capacity'],hosp['date'],hosp['vaccine']))
+            else:
+                print ("Ignoring already sent requests....")
 
     return True
 
